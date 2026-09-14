@@ -68,27 +68,64 @@ class StudentViewSet(viewsets.ReadOnlyModelViewSet):
         today = timezone.now().astimezone(student_timezone).date()
         current_streak = 0
         check_date = today
+        rest_weeks_used = set()
 
-        # Walk backward from today until the first unread day.
-        while check_date in read_dates:
-            current_streak += 1
+        while True:
+            if check_date in read_dates:
+                current_streak += 1
+            else:
+                week = check_date.isocalendar()[:2] #returns a tuple like (2026, 38)
+
+                if week in rest_weeks_used:
+                    break
+
+                rest_weeks_used.add(week)
+
             check_date -= timedelta(days=1)
 
         longest_streak = 0
-        running_streak = 0
-        previous_date = None
 
-        for read_date in sorted(read_dates):
-            if (
-                previous_date is not None
-                and read_date == previous_date + timedelta(days=1)
-            ):
-                running_streak += 1
-            else:
-                running_streak = 1
+        if read_dates:
+            streak = 0
+            rest_weeks_used = set()
+            check_date = min(read_dates)
+            last_date = max(read_dates)
 
-            longest_streak = max(longest_streak, running_streak)
-            previous_date = read_date
+            while check_date <= last_date:
+                if check_date in read_dates:
+                    streak += 1
+                    longest_streak = max(longest_streak, streak)
+                else:
+                    week = check_date.isocalendar()[:2]
+
+                    if week in rest_weeks_used:
+                        streak = 0
+                        rest_weeks_used = set()
+                    else:
+                        rest_weeks_used.add(week)
+
+                check_date += timedelta(days=1)
+
+        # Walk backward from today until the first unread day.
+        # while check_date in read_dates:
+        #     current_streak += 1
+        #     check_date -= timedelta(days=1)
+
+        # longest_streak = 0
+        # running_streak = 0
+        # previous_date = None
+
+        # for read_date in sorted(read_dates):
+        #     if (
+        #         previous_date is not None
+        #         and read_date == previous_date + timedelta(days=1)
+        #     ):
+        #         running_streak += 1
+        #     else:
+        #         running_streak = 1
+
+        #     longest_streak = max(longest_streak, running_streak)
+        #     previous_date = read_date
 
         return Response(
             {
