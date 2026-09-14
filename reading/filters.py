@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from .models import Book
+from .models import Book, ReadingSession
 
 
 class NumberInFilter(filters.BaseInFilter, filters.NumberFilter):
@@ -19,3 +19,11 @@ class BookFilter(filters.FilterSet):
     class Meta:
         model = Book
         fields = ["author"]
+
+
+class ReadingSessionFilter(filters.FilterSet):
+    book_id__in = NumberInFilter(field_name="book_id", lookup_expr="in")
+
+    class Meta:
+        model = ReadingSession
+        fields = []
